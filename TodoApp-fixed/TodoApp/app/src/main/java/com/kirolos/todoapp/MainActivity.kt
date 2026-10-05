@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsState()
