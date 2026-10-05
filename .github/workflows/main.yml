@@ -15,7 +15,8 @@ jobs:
         with:
           gradle-version: 8.7
       - run: gradle assembleDebug --no-daemon
+        working-directory: TodoApp-fixed/TodoApp
       - uses: actions/upload-artifact@v4
         with:
           name: TodoApp-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: TodoApp-fixed/TodoApp/app/build/outputs/apk/debug/app-debug.apk
