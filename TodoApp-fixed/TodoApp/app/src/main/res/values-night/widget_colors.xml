@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="widget_bg">#1C1C1E</color>
+    <!-- زجاج غامق -->
+    <color name="glass_fill_top">#B31C1C2E</color>
+    <color name="glass_fill_bottom">#8C101020</color>
+    <color name="glass_shine">#26FFFFFF</color>
+    <color name="glass_stroke">#4DFFFFFF</color>
+    <color name="widget_divider">#26FFFFFF</color>
     <color name="widget_label">#FFFFFF</color>
-    <color name="widget_secondary">#98989F</color>
+    <color name="widget_secondary">#B3EBEBF5</color>
+    <color name="widget_accent">#0A84FF</color>
+    <color name="widget_red">#FF453A</color>
+    <color name="widget_orange">#FF9F0A</color>
+    <color name="glass_window_bg">#0B0B1E</color>
 </resources>

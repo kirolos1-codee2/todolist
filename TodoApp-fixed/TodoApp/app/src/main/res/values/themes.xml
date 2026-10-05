@@ -1,3 +1,5 @@
 <resources>
-    <style name="Theme.TodoApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.TodoApp" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/glass_window_bg</item>
+    </style>
 </resources>

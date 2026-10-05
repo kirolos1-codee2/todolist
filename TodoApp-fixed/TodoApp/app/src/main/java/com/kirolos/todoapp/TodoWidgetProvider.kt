@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.view.View
 import android.widget.RemoteViews
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,10 +27,11 @@ class TodoWidgetProvider : AppWidgetProvider() {
             val id = intent.getIntExtra(EXTRA_ID, -1)
             if (id != -1) {
                 val pending = goAsync()
+                val ctx = context.applicationContext
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        TaskDatabase.getInstance(context).taskDao().toggleById(id)
-                        refresh(context)
+                        // بتقفل المهمة (أو بتنقلها للموعد الجاي لو متكررة) وبتحدّث الويدجت
+                        TaskActions.complete(ctx, id)
                     } finally { pending.finish() }
                 }
             }
@@ -47,14 +49,22 @@ class TodoWidgetProvider : AppWidgetProvider() {
             val mgr = AppWidgetManager.getInstance(context)
             val ids = mgr.getAppWidgetIds(ComponentName(context, TodoWidgetProvider::class.java))
             if (ids.isEmpty()) return
-            val count = TaskDatabase.getInstance(context).taskDao().pendingCountNow()
-            for (id in ids) mgr.updateAppWidget(id, build(context, id, count))
+            val dao = TaskDatabase.getInstance(context).taskDao()
+            val count = dao.pendingCountNow()
+            val overdue = dao.overdueCountNow(Dates.startOfDay())
+            for (id in ids) mgr.updateAppWidget(id, build(context, id, count, overdue))
             mgr.notifyAppWidgetViewDataChanged(ids, R.id.widget_list)
         }
 
-        private fun build(context: Context, widgetId: Int, count: Int): RemoteViews {
+        private fun build(context: Context, widgetId: Int, count: Int, overdue: Int): RemoteViews {
             val v = RemoteViews(context.packageName, R.layout.widget_todo)
-            v.setTextViewText(R.id.widget_count, if (count == 0) "مفيش مهام متبقية" else "$count متبقية")
+            v.setTextViewText(R.id.widget_count, if (count == 0) "كله تمام ✨" else "$count متبقية")
+            if (overdue > 0) {
+                v.setViewVisibility(R.id.widget_overdue, View.VISIBLE)
+                v.setTextViewText(R.id.widget_overdue, "· $overdue متأخرة")
+            } else {
+                v.setViewVisibility(R.id.widget_overdue, View.GONE)
+            }
 
             val svc = Intent(context, TodoWidgetService::class.java).apply {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)

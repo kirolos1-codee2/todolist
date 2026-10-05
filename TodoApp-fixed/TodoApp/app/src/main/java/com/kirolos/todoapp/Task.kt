@@ -1,5 +1,6 @@
 package com.kirolos.todoapp
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,5 +11,8 @@ data class Task(
     val isDone: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val priority: Int = 0,      // 0 بدون، 1 منخفضة، 2 متوسطة، 3 عالية
-    val dueDate: Long? = null   // بداية اليوم بالـ millis
+    val dueDate: Long? = null,  // بداية اليوم بالـ millis
+    @ColumnInfo(defaultValue = "''") val notes: String = "",
+    @ColumnInfo(defaultValue = "0") val repeatMode: Int = 0,  // 0 بدون، 1 يومي، 2 أسبوعي، 3 شهري
+    val reminderMin: Int? = null  // وقت التذكير: دقائق من بداية اليوم (محتاج dueDate)
 )

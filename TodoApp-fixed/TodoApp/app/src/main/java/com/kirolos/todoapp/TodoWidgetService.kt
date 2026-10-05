@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
+import androidx.core.content.ContextCompat
 
 class TodoWidgetService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsService.RemoteViewsFactory =
@@ -26,9 +27,25 @@ private class TodoWidgetFactory(private val ctx: Context) : RemoteViewsService.R
     override fun getViewAt(position: Int): RemoteViews {
         val rv = RemoteViews(ctx.packageName, R.layout.widget_item)
         val t = items.getOrNull(position) ?: return rv
-        val due = t.dueDate?.let { Dates.label(it) } ?: ""
+
+        // لون الدايرة حسب الأولوية
+        val ring = when (t.priority) {
+            3 -> R.color.widget_red
+            2 -> R.color.widget_orange
+            else -> R.color.widget_accent
+        }
+        rv.setTextColor(R.id.item_check, ContextCompat.getColor(ctx, ring))
         rv.setTextViewText(R.id.item_title, if (t.priority > 0) "${"!".repeat(t.priority)} ${t.title}" else t.title)
-        rv.setTextViewText(R.id.item_due, due)
+
+        val due = t.dueDate
+        val dueText = if (due == null) "" else {
+            Dates.label(due) + (t.reminderMin?.let { " " + Dates.timeLabel(it) } ?: "")
+        }
+        rv.setTextViewText(R.id.item_due, dueText)
+        rv.setTextColor(
+            R.id.item_due,
+            ContextCompat.getColor(ctx, if (t.isOverdue()) R.color.widget_red else R.color.widget_secondary)
+        )
         rv.setOnClickFillInIntent(R.id.item_root, Intent().putExtra(TodoWidgetProvider.EXTRA_ID, t.id))
         return rv
     }
