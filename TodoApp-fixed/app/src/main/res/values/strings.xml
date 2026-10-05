@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">To-Do List</string>
+    <string name="widget_name">قائمة المهام</string>
+    <string name="widget_desc">مهامك على الشاشة الرئيسية بتصميم زجاجي</string>
+    <string name="channel_name">التذكيرات</string>
+    <string name="reminder_default_body">حان موعد المهمة</string>
+    <string name="action_done">تم</string>
+    <string name="action_snooze">بعد ١٠ دقايق</string>
+</resources>

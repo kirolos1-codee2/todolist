@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "286857255775",
+    "project_id": "todolist-kirolos",
+    "storage_bucket": "todolist-kirolos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:286857255775:android:d2d7ad95c9f111b90df4ea",
+        "android_client_info": {
+          "package_name": "com.kirolos.todoapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "286857255775-l7buca1g1ted5fprdrvbs1dee3j7ldvr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuiGi5SoWOOWrMgE5wmadjk84eWHH90OM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "286857255775-l7buca1g1ted5fprdrvbs1dee3j7ldvr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
