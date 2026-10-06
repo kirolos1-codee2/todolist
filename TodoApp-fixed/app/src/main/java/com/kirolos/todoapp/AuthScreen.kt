@@ -1,5 +1,7 @@
 package com.kirolos.todoapp
 
+import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -44,12 +49,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
 
 private fun authError(e: Exception?): String = when (e) {
     is FirebaseAuthWeakPasswordException -> "الباسورد ضعيف، استخدم ٦ حروف أو أرقام على الأقل"
@@ -58,6 +73,22 @@ private fun authError(e: Exception?): String = when (e) {
     is FirebaseAuthInvalidCredentialsException -> "الإيميل أو الباسورد غلط"
     is FirebaseNetworkException -> "مفيش اتصال بالإنترنت"
     else -> "حصلت مشكلة، حاول تاني"
+}
+
+/** بيطلع قايمة حسابات جوجل اللي على الموبايل ويرجّع ID token نبدّله بجلسة Firebase */
+private suspend fun googleIdToken(context: Context): String {
+    val option = GetGoogleIdOption.Builder()
+        .setFilterByAuthorizedAccounts(false)
+        .setServerClientId(context.getString(R.string.default_web_client_id))
+        .build()
+    val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+    val credential = CredentialManager.create(context).getCredential(context, request).credential
+    if (credential is CustomCredential &&
+        credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+    ) {
+        return GoogleIdTokenCredential.createFrom(credential.data).idToken
+    }
+    throw IllegalStateException("unexpected credential type")
 }
 
 /** شاشة تسجيل الدخول / إنشاء حساب بنفس تصميم الزجاج */
@@ -72,7 +103,36 @@ fun AuthScreen() {
     var error by remember { mutableStateOf<String?>(null) }
     var info by remember { mutableStateOf<String?>(null) }
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     val canSubmit = !busy && email.isNotBlank() && pass.isNotEmpty()
+
+    fun google() {
+        if (busy) return
+        busy = true; error = null; info = null
+        scope.launch {
+            try {
+                val credential = GoogleAuthProvider.getCredential(googleIdToken(context), null)
+                auth.signInWithCredential(credential).addOnCompleteListener { t ->
+                    busy = false
+                    if (!t.isSuccessful) error = authError(t.exception)
+                    // لو نجح، حالة الدخول بتتغير لوحدها والشاشة الرئيسية بتظهر
+                }
+            } catch (e: GetCredentialCancellationException) {
+                busy = false   // قفل القايمة: مفيش رسالة
+            } catch (e: NoCredentialException) {
+                busy = false
+                error = "مفيش حساب جوجل على الموبايل، ضيف حساب من إعدادات الموبايل وجرّب تاني"
+            } catch (e: GetCredentialException) {
+                busy = false
+                error = "تسجيل الدخول بجوجل ماكملش، اتأكد من إضافة SHA-1 في Firebase (راجع الـ README)"
+            } catch (e: Exception) {
+                busy = false
+                error = "حصلت مشكلة، حاول تاني"
+            }
+        }
+    }
 
     fun submit() {
         if (!canSubmit) return
@@ -117,6 +177,29 @@ fun AuthScreen() {
         )
 
         Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(28.dp), strong = true).padding(18.dp)) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(50))
+                    .background(Color.White)
+                    .clickable(enabled = !busy, onClick = ::google)
+                    .padding(vertical = 13.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(painterResource(R.drawable.ic_google), contentDescription = null, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.size(10.dp))
+                Text(
+                    "المتابعة باستخدام Google",
+                    color = Color(0xFF1F1F1F), fontSize = 16.sp, fontWeight = FontWeight.Medium
+                )
+            }
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.weight(1f).height(1.dp).background(g.separator))
+                Text("أو بالإيميل", color = g.secondary, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                Box(Modifier.weight(1f).height(1.dp).background(g.separator))
+            }
             Segmented(listOf("تسجيل دخول", "حساب جديد"), if (register) 1 else 0) {
                 register = it == 1; error = null; info = null
             }

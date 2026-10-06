@@ -73,6 +73,11 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
+    // تسجيل الدخول بجوجل (Credential Manager)
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
     // مزامنة في الخلفية (بتجيب المهام الجديدة من الإكستنشن حتى والتطبيق مقفول)
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 }
